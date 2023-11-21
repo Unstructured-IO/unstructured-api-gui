@@ -35,7 +35,7 @@ To run the application locally
 From your terminal:
 
 ```sh
-npm i \
+npm i
 npm run dev
 ```
 
