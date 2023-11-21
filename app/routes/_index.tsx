@@ -72,8 +72,7 @@ export const action = async ({ request }: ActionArgs) => {
         headers: {
           "Content-Type": "multipart/form-data",
           accept: "application/json",
-          "unstructured-api-key":
-            "MVYsjzKucrkuqLdDLoSDFKjFURJORo" || process.env.API_KEY,
+          "unstructured-api-key": apiKey,
         },
       }
     );
