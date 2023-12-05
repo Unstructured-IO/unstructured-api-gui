@@ -1,18 +1,19 @@
-import { Menu, Transition } from '@headlessui/react'
-import { FC, Fragment } from 'react'
-import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import { Menu, Transition } from "@headlessui/react";
+import { FC, Fragment } from "react";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
-type CustomMenuItemProps = { 
-    label: string
-    callback: () => void
-}
+type CustomMenuItemProps = {
+  label: string;
+  callback: () => void;
+};
 
 type MenuProps = {
-    label: string
-    items: CustomMenuItemProps[]
-}
+  label: string;
+  disabled?: boolean;
+  items: CustomMenuItemProps[];
+};
 
-const FilterMenu: FC<MenuProps> = ({label, items}) => {
+const FilterMenu: FC<MenuProps> = ({ label, items, disabled }) => {
   return (
     <div className="absolute z-10 top-5 left-5">
       <Menu as="div" className="relative inline-block text-left">
@@ -35,25 +36,25 @@ const FilterMenu: FC<MenuProps> = ({label, items}) => {
           leaveTo="transform opacity-0 scale-95"
         >
           <Menu.Items className="absolute z-100 left-0 top-10 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                { items.map( ({label, callback}) => (
-                    <Menu.Item>
-                        {({ active }) => (
-                            <button
-                                onClick={() => callback()}
-                                className={`${
-                                active ? 'bg-light-blue text-white' : 'text-gray-900'
-                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                                {label}
-                            </button>
-                        )}
-                    </Menu.Item>
-                )) }
+            {items.map(({ label, callback }) => (
+              <Menu.Item key={label} disabled={disabled}>
+                {({ active }) => (
+                  <button
+                    onClick={() => callback()}
+                    className={`${
+                      active ? "bg-light-blue text-white" : "text-gray-900"
+                    } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                  >
+                    {label}
+                  </button>
+                )}
+              </Menu.Item>
+            ))}
           </Menu.Items>
         </Transition>
       </Menu>
     </div>
-  )
-}
+  );
+};
 
-export {FilterMenu}
+export { FilterMenu };

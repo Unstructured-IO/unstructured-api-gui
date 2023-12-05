@@ -7,7 +7,7 @@ import {
 } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { LinkButton } from "~/components/LinkButton";
 import { FormGroup } from "~/components/FormGroup";
@@ -25,26 +25,15 @@ import { SectionHeading } from "~/components/SectionHeading";
 import { FilterMenu } from "~/components/Menu";
 import { Stats } from "~/components/Stats";
 
-import { getKeys, setProperty, getProperty } from "~/utils";
-
-type ResponseErr = {
-  status?: number;
-  error?: object;
-};
-
-type DisplayData = Object | Array<any>;
-
-type TypeStat = {
-  type: string;
-  percent: number;
-  count: number;
-};
-
-type DataStats = {
-  total: number;
-  typeCount: number;
-  types: TypeStat[];
-};
+import { getKeys, getProperty, extractTypes } from "~/utils";
+import type {
+  DataStats,
+  DisplayData,
+  ResponseErr,
+  TypeStat,
+  outputFormat,
+} from "~/types";
+import { Tabs } from "~/components/Tabs";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -60,6 +49,10 @@ export const loader = async () => {
 export const action = async ({ request }: ActionArgs) => {
   const form = await request.formData();
   const apiKey = form.get("api_key") as string;
+
+  for (let pair of form) {
+    console.log(pair);
+  }
 
   if (!apiKey) {
     return json({ error: { apiKey: "You need to add an API Key" } });
@@ -89,31 +82,32 @@ export const action = async ({ request }: ActionArgs) => {
   }
 };
 
-const extractTypes = (array: Array<Object>) => {
-  const dataType: Object = {};
-  array.forEach((el: any) => {
-    if (dataType.hasOwnProperty(el.type)) {
-      getProperty(dataType, el.type).push(el);
-      return;
-    }
-    setProperty(dataType, el.type, [el]);
-  });
-  return dataType;
+const formatTextData = (data: DisplayData) => {
+  if (Array.isArray(data)) {
+    const text = data.map(({ text }: { text: string }) => text);
+    return text.join("\n");
+  }
 };
 
 export default function Index() {
   const transition = useNavigation();
   const { apiKey } = useLoaderData<typeof loader>();
   const data = useActionData<typeof action>();
+  const [textData, setTextData] = useState<string | undefined | null>(() =>
+    Array.isArray(data) ? formatTextData(data) : null
+  );
   const [dataDownload, setDataDownload] = useState<string>("");
   const [dataByType, setDataByType] = useState<Object>({});
   const [dataToExplore, setDataToExplore] = useState<DisplayData>();
+  const [outputFormat, setOutputFormat] = useState<outputFormat>("JSON");
   const [dataStats, setDataStats] = useState<DataStats>();
   const [dataTypes, setDataTypes] = useState<(keyof Object)[]>();
 
   useEffect(() => {
     if (data && !data.error) {
       setDataToExplore(data);
+      setTextData(formatTextData(data));
+      setOutputFormat("JSON");
     }
   }, [data, setDataToExplore]);
 
@@ -157,17 +151,38 @@ export default function Index() {
     );
 
   useEffect(() => {
-    if (data) {
+    if (data && outputFormat === "JSON") {
       const blob = new Blob([JSON.stringify(data)], {
         type: "application/json",
       });
       const url = URL.createObjectURL(blob);
       setDataDownload(url);
     }
-  }, [data]);
+
+    if (data && outputFormat === "Text") {
+      const blob = new Blob([String(textData)], {
+        type: "text/plain",
+      });
+      const url = URL.createObjectURL(blob);
+      setDataDownload(url);
+    }
+  }, [data, outputFormat, textData]);
+
+  const handleOutputFormat = useCallback(
+    () => (format: outputFormat) => {
+      if (format === "Text" && typeof textData === "string") {
+        setDataToExplore(textData);
+      }
+      if (format === "JSON") {
+        setDataToExplore(data);
+      }
+      setOutputFormat(format);
+    },
+    [setDataToExplore, setOutputFormat, textData, data]
+  );
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
+    <div>
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold tracking-tight text-dark-slate-blue">
@@ -175,10 +190,10 @@ export default function Index() {
           </h1>
         </div>
       </header>
-      <main>
+      <main className="p-5">
         {data?.error?.detail && (
           <Alert header="Looks like something went wrong...">
-            <ul role="list" className="list-disc space-y-1 pl-5">
+            <ul className="list-disc space-y-1 pl-5">
               {data.error.detail.map((err: any, i: number) => {
                 return (
                   <li key={`error-${err.type}-${i}`}>
@@ -193,7 +208,7 @@ export default function Index() {
 
         {data?.error?.apiKey && (
           <Alert header="Looks like something went wrong...">
-            <ul role="list" className="list-disc space-y-1 pl-5">
+            <ul className="list-disc space-y-1 pl-5">
               <li>
                 <p className="font-md">{data?.error?.apiKey}</p>
               </li>
@@ -322,28 +337,36 @@ export default function Index() {
                 />
               )}
 
-              <div className="mt-10 pt-16 flex overflow-auto items-center justify-center rounded-b-lg text-sm leading-[1.5714285714] text-white sm:rounded-t-lg language-jsx bg-[#00161c] whitespace-break-spaces h-full max-h-[80vh] relative">
+              <div className="my-10 pt-16 flex overflow-auto items-center justify-center rounded-b-lg text-sm leading-[1.5714285714] text-white sm:rounded-t-lg language-jsx bg-[#00161c] whitespace-break-spaces h-full max-h-[80vh] relative">
                 {data && transition.state === "idle" && (
-                  <div className="absolute z-10 top-5 right-5">
+                  <div className="absolute z-10 top-5 right-5 flex gap-4">
+                    <Tabs
+                      tabs={["JSON", "Text"]}
+                      defaultTab="JSON"
+                      setOutputFormat={handleOutputFormat()}
+                    />
                     <LinkButton
                       href={dataDownload}
                       download={true}
-                      label="Download output as JSON"
+                      label={`Download output as ${outputFormat}`}
                     >
-                      Download JSON
+                      Download {outputFormat}
                     </LinkButton>
                   </div>
                 )}
-                {data && transition.state === "idle" && dataTypes && (
-                  <FilterMenu
-                    label="Filter"
-                    items={dataTypes.map((type) => ({
-                      label: `${type} (${dataByType[type].length})`,
-                      callback: () =>
-                        setDataToExplore(getProperty(dataByType, type)),
-                    }))}
-                  />
-                )}
+                {data &&
+                  transition.state === "idle" &&
+                  outputFormat === "JSON" &&
+                  dataTypes && (
+                    <FilterMenu
+                      label="Filter"
+                      items={dataTypes.map((type) => ({
+                        label: `${type} (${dataByType[type].length})`,
+                        callback: () =>
+                          setDataToExplore(getProperty(dataByType, type)),
+                      }))}
+                    />
+                  )}
                 {data && transition.state === "idle" ? (
                   <div
                     style={{ backgroundColor: "#00161c" }}
