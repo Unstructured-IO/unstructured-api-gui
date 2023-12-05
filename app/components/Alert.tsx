@@ -1,6 +1,7 @@
 import { XCircleIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { Transition } from '@headlessui/react'
-import { FC, Fragment, ReactNode, useState } from 'react'
+import type { FC, ReactNode} from 'react';
+import { Fragment, useState } from 'react'
 
 
 type AlertProps = {
