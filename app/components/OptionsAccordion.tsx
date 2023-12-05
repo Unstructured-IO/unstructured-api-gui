@@ -1,6 +1,6 @@
 import { Disclosure } from '@headlessui/react'
 import { ChevronUpIcon } from '@heroicons/react/20/solid'
-import { FC, ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 
 import { CheckboxInput } from "~/components/CheckBoxGroups"
 import { TextInput } from "~/components/TextInput"

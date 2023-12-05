@@ -1,4 +1,5 @@
-import { FC, useState } from 'react'
+import type { FC} from 'react';
+import { useState } from 'react'
 import { DocumentIcon } from '@heroicons/react/20/solid'
 
 const FileUpload: FC = () => {

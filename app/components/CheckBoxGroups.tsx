@@ -1,4 +1,4 @@
-import { FC } from "react"
+import type { FC } from "react"
 
 type CheckboxInputProps = {
     name: string,
@@ -39,7 +39,7 @@ const CheckboxInputGroup: FC<CheckboxInputGroupProps> = ({legend, options}) =>  
     <fieldset>
         <legend className="text-sm font-semibold leading-6 text-gray-900">{legend}</legend>
         <div className="mt-6 space-y-6">
-            { options.map( ({name, label, helper}) => <CheckboxInput name={name} label={label} helper={helper} />) }
+            { options.map( ({name, label, helper}) => <CheckboxInput key={name} name={name} label={label} helper={helper} />) }
         </div>
     </fieldset> 
   )

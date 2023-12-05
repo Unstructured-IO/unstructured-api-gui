@@ -1,5 +1,6 @@
 import { Menu, Transition } from "@headlessui/react";
-import { FC, Fragment } from "react";
+import type { FC} from "react";
+import { Fragment } from "react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 type CustomMenuItemProps = {

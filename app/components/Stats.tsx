@@ -1,6 +1,6 @@
 import { Disclosure } from '@headlessui/react'
 import { ChevronUpIcon } from '@heroicons/react/20/solid'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 type StatProps = {
     label: string
